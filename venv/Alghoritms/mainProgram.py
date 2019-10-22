@@ -43,7 +43,7 @@ while(True):
      # RGB - Red
     cv2.imshow('R-RGB', r)
 
-    cv2.waitKey(0)
+  ##  cv2.waitKey(0)
 
 
 
