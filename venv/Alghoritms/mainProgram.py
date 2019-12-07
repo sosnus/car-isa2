@@ -1,31 +1,106 @@
-print("isa-car2")
-print("version 0.1")
-
+import time
+from imutils.video import VideoStream
+import serial
 import numpy as np
 import cv2
 
-cap = cv2.VideoCapture(0)
-# cap.open("rtsp://USER:PASS@IP:PORT/Streaming/Channels/2")
+def translate(value, oldMin, oldMax, newMin=-100, newMax=100):
+    oldRange = oldMax - oldMin
+    newRange = newMax - newMin
+    NewValue = (((value - oldMin) * newRange) / oldRange) + newMin
+    return int(NewValue)
 
-while (True):
-    # Capture frame-by-frame
-    ret, frame = cap.read()
+usesPiCamera = False
 
-    # Our operations on the frame come here
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+cameraResolution = (640, 480)
+vs = VideoStream(usePiCamera=usesPiCamera, resolution=cameraResolution, framerate=60).start()
+time.sleep(2.0)
 
-    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 50, 150, param1=50, param2=51, minRadius=0, maxRadius=200)
+colorLower = (0, 100, 50)
+colorUpper = (100, 255, 255)
+colorTolerance = 3
+paused = False
+roiSize = (16, 16)  # roi size on the scaled down image (converted to HSV)
 
-    circles = np.uint16(np.around(circles))
-    for i in circles[0, :]:
-        # draw the outer circle
-        cv2.circle(gray, (i[0], i[1]), i[2], (0, 255, 0), 2)
+while True:
+    loopStart = time.time()
+    if not paused:
+        frame = vs.read()
 
-    cv2.imshow('detected circles', gray)
-    # Display the resulting frame
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+        height, width = frame.shape[0:2]
+        scaleFactor = 4
+        newWidth, newHeight = width // scaleFactor, height // scaleFactor
+
+        resizedColor = cv2.resize(frame, (newWidth, newHeight), interpolation=cv2.INTER_CUBIC)
+        resizedColor_blurred = cv2.GaussianBlur(resizedColor, (5, 5), 0)
+
+        resizedHSV = cv2.cvtColor(resizedColor_blurred, cv2.COLOR_BGR2HSV)
+
+        roi = resizedHSV[newHeight // 2 - roiSize[0] // 2: newHeight // 2 + roiSize[0] // 2,
+              newWidth // 2 - roiSize[1] // 2: newWidth // 2 + roiSize[1] // 2, :]
+
+        colorLowerWithTolerance = (colorLower[0] - colorTolerance,) + colorLower[1:]
+        colorUpperWithTolerance = (colorUpper[0] + colorTolerance,) + colorUpper[1:]
+
+        mask = cv2.inRange(resizedHSV, colorLowerWithTolerance, colorUpperWithTolerance)
+        cv2.erode(mask, None, iterations=5)
+        cv2.dilate(mask, None, iterations=5)
+
+        (contours, hierarchy) = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        boundingBoxes = []
+        biggestObject_BoundingBox = None
+        biggestObjectMiddle = None
+        if contours:
+            largestContour = max(contours, key=cv2.contourArea)
+            biggestObject_BoundingBox = cv2.boundingRect(largestContour)
+
+            for i, contour in enumerate(contours):
+                area = cv2.contourArea(contour)
+                if area > ((newWidth * newHeight) / 256):
+                    x, y, w, h = cv2.boundingRect(contour)
+                    boundingBoxes.append((x, y, w, h))
+        else:
+            pass
+
+        upscaledColor = cv2.resize(resizedColor, (width, height), interpolation=cv2.INTER_NEAREST)
+
+        for boundingBox in boundingBoxes:
+            x, y, w, h = boundingBox
+            cv2.rectangle(resizedColor, (x, y), (x + w, y + h), (255, 255, 0), thickness=1)
+            cv2.rectangle(upscaledColor, (x * scaleFactor, y * scaleFactor),
+                          ((x + w) * scaleFactor, (y + h) * scaleFactor), (255, 255, 0), thickness=2)
+
+        if biggestObject_BoundingBox:
+            x, y, w, h = biggestObject_BoundingBox
+            biggestObjectMiddle = ((x + w // 2) * scaleFactor, (y + h // 2) * scaleFactor)
+            cv2.rectangle(resizedColor, (x, y), (x + w, y + h), (0, 0, 255), thickness=2)
+            cv2.rectangle(upscaledColor, (x * scaleFactor, y * scaleFactor),
+                          ((x + w) * scaleFactor, (y + h) * scaleFactor), (0, 0, 255), thickness=3)
+            cv2.circle(upscaledColor, biggestObjectMiddle, 2, (255, 0, 0), thickness=2)
+            screenMiddle = width // 2, height // 2
+            cv2.line(upscaledColor, screenMiddle, biggestObjectMiddle, (0, 0, 255))   # to rysuje ta linie od środka do piłki
+
+        cv2.imshow("video", upscaledColor)
+        # cv2.imshow("roi", roi)
+        cv2.imshow("mask", mask)
+
+        modTolerances = False
+
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord('q'):
         break
+    elif key == ord('w'):
+        colorTolerance = min(colorTolerance + 1, 50)
+        print("New color range: {}".format(colorTolerance))
+    elif key == ord('s'):
+        colorTolerance = max(colorTolerance - 1, 0)
+        print("New color range: {}".format(colorTolerance))
+    elif key == ord('p'):
+        paused = not paused
 
-# When everything done, release the capture
-cap.release()
+    loopEnd = time.time()
+    print("loop execution took {:3.2f}ms".format((loopEnd - loopStart) * 1000))
+
 cv2.destroyAllWindows()
+vs.stop()
