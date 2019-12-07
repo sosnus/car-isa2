@@ -12,7 +12,6 @@ enum channel {SharpL = 0,  SharpC,  SharpR,  Baterry,  Wheels,  Motor,  Motor2, 
 void setup() {
   // put your setup code here, to run once:
 Serial.begin(115200);
-//Serial.println("Arduino ISA test...");
 Serial.println("SharpL,  SharpC,  SharpR,  Baterry,  Wheels,  Motor,  Motor2,  Dir1,  Dir2,  CamH,  CamV");
 }
 
@@ -26,14 +25,18 @@ void loop() {
   //read from serialport
   // buffer sync
   //TODO: buffer sync
-  /*
-  int intFromSerial = 
+  
+  int intFromSerial = 0;
   do{
-    
-  }while
-  values[Motor] = 
+  intFromSerial = Serial.parseInt();
+  Serial.print("parse test: ");
+  Serial.println(intFromSerial);  
+  }while (intFromSerial != 256);
+  
+  Serial.print("NICE!!!");
+//  values[Motor] = 
 
-*/
+
   
   for(uint8_t i = 0; i<12; i++)
   {
