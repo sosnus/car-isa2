@@ -1,0 +1,4 @@
+cd /Desktop/car-isa2/venv
+source venv/bin/activate
+cd ./Algorithms
+python mainProgram.py
