@@ -79,7 +79,7 @@ while True:
                           ((x + w) * scaleFactor, (y + h) * scaleFactor), (0, 0, 255), thickness=3)
             cv2.circle(upscaledColor, biggestObjectMiddle, 2, (255, 0, 0), thickness=2)
             screenMiddle = width // 2, height // 2
-            cv2.line(upscaledColor, screenMiddle, biggestObjectMiddle, (0, 0, 255))   # to rysuje ta linie od środka do piłki
+            cv2.line(upscaledColor, screenMiddle, biggestObjectMiddle, (0, 0, 255))   # to rysuje ta linie
 
         cv2.imshow("video", upscaledColor)
         # cv2.imshow("roi", roi)
