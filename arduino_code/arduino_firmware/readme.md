@@ -1,3 +1,5 @@
+# TODO zrobić nowa dokumentację
+
 # Dokumentacja do komunikacji RPI=>Arduino
 
 ## Symbole dzielimy na WARTOŚCI oraz KOMENDY
