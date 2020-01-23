@@ -1,10 +1,4 @@
-Podłączenie RPI z Arduino
-Tx -> Rx
-Rx -> Tx
-
-W RPI 3B+
-Tx   <-  GPIO 14
-Rx   <-  GPIO 15
+Podłączenie RPI z Arduino po przewodzie z USB
 
 Przed uruchomieniem komunikacji w terminalu wpisz:
 
@@ -15,12 +9,14 @@ Następnie wpisz
 
 	sudo pip install pyserial
 
-Potem sprawdz czy masz ttyS0 poprzez wpisanie:
+Potem sprawdz czy masz ttyUSB0 poprzez wpisanie:
 	
 	sudo ls -a /dev/tty*
 
 A na koniec daj uprawnienia dla tego portu:
 
-	sudo chmod 777 /dev/ttyS0
+	sudo chmod 777 /dev/ttyUSB0
 
 Można uruchomić skrypt Pythonowy.
+
+	python3 komunikacja2.py
