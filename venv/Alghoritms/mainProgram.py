@@ -9,8 +9,10 @@ def changeData(biggestObjectMiddle):
     placeY = biggestObjectMiddle[1]
     x = (placeX - 320)/320*100
     y = (placeY - 240)/240*100
-    print(x)
-    print(y)
+    ser = serial.Serial('/dev/ttyUSB0',9600)
+    ser.write(str.encode(str(x) + " " + str(y)))
+    # print(x)
+    # print(y)
 
 def translate(value, oldMin, oldMax, newMin=-100, newMax=100):
     oldRange = oldMax - oldMin
