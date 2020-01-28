@@ -5,6 +5,10 @@ import numpy as np
 import cv2
 import myserial
 
+servoX = 90
+servoY = 90
+print("wait")
+#timer.sleep(10)
 def changeData(biggestObjectMiddle):
     placeX = biggestObjectMiddle[0]
     placeY = biggestObjectMiddle[1]
@@ -18,8 +22,12 @@ def changeData(biggestObjectMiddle):
     print("x=",round(x,2), end = " ")
     print("y=",round(y,2))
 #    time.sleep(0.5)
-    myserial.send(sName = myserial.myservo['cam_H'],sVal = int(x))
-    myserial.send(sName = myserial.myservo['cam_V'],sVal = int(y))    
+#    if x < 0:
+#        servoX = servoX - 1
+#    else:
+#        servoX = servoX + 1
+  ##  myserial.send(sName = myserial.myservo['cam_H'],sVal = int(x))
+  ##  myserial.send(sName = myserial.myservo['cam_V'],sVal = int(y))    
  #//   ser = serial.Serial('/dev/ttyUSB0',9600)
  #//   ser.write(str.encode(str(x) + " " + str(y)))
     # print(x)
@@ -47,6 +55,8 @@ while True:
     loopStart = time.time()
     if not paused:
         frame = vs.read()
+        frame = cv2.flip(frame, 1)
+        #np.fliplr(frame)
 
         height, width = frame.shape[0:2]
         scaleFactor = 4
@@ -85,7 +95,7 @@ while True:
             pass
 
         upscaledColor = cv2.resize(resizedColor, (width, height), interpolation=cv2.INTER_NEAREST)
-
+        
         for boundingBox in boundingBoxes:
             x, y, w, h = boundingBox
             cv2.rectangle(resizedColor, (x, y), (x + w, y + h), (255, 255, 0), thickness=1)
@@ -107,6 +117,7 @@ while True:
                 changeData(biggestObjectMiddle)
             else:
                 print("No object")
+        np.fliplr(upscaledColor)
         cv2.imshow("video", upscaledColor)
         # cv2.imshow("roi", roi)
         cv2.imshow("mask", mask)

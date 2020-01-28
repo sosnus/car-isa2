@@ -3,7 +3,7 @@ import time
 import serial
 #Class myserial:
 ser = serial.Serial(
-    port='/dev/ttyUSB0',
+    port='/dev/ttyACM0',
     baudrate = 9600,
     parity=serial.PARITY_NONE,
     stopbits=serial.STOPBITS_ONE,
@@ -60,6 +60,15 @@ def stopWheels():
     ser.write(bytes([myservo["motor_R"]]))
     ser.write(bytes([right]))
     print("set L=" , left , "  R=" , right)
+    
+    
+send(sName = myservo['cam_H'], sVal = 90)
+send(sName = myservo['cam_V'], sVal = 90)
+send(sName = myservo['motor_L'], sVal = 90)
+send(sName = myservo['motor_R'], sVal = 90)
+
+
+
 
 # def setServo(servo_name
     
