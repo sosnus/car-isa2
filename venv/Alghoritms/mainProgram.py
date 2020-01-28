@@ -4,6 +4,14 @@ import serial
 import numpy as np
 import cv2
 
+def changeData(biggestObjectMiddle):
+    placeX = biggestObjectMiddle[0]
+    placeY = biggestObjectMiddle[1]
+    x = (placeX - 320)/320*100
+    y = (placeY - 240)/240*100
+    print(x)
+    print(y)
+
 def translate(value, oldMin, oldMax, newMin=-100, newMax=100):
     oldRange = oldMax - oldMin
     newRange = newMax - newMin
@@ -81,6 +89,11 @@ while True:
             screenMiddle = width // 2, height // 2
             cv2.line(upscaledColor, screenMiddle, biggestObjectMiddle, (0, 0, 255))   # to rysuje ta linie
 
+            # print(biggestObjectMiddle)
+            if type(biggestObjectMiddle) != 'NoneType':
+                changeData(biggestObjectMiddle)
+            else:
+                print("No object")
         cv2.imshow("video", upscaledColor)
         # cv2.imshow("roi", roi)
         cv2.imshow("mask", mask)
@@ -105,3 +118,4 @@ while True:
 
 cv2.destroyAllWindows()
 vs.stop()
+    
