@@ -11,6 +11,9 @@ ser = serial.Serial(
     timeout=1
     )
 
+offset_l = -1
+offset_r = -1
+
 myservo =  {
     "cam_H": 209,
     "cam_V": 210,
@@ -37,6 +40,33 @@ def receive():
         x=ser.readline()
         print(x)
     print("exit receive loop")
+    
+def setWheels(diff = 0, speed = 0):
+    left = (90 + offset_l) + diff + speed
+    right = (90 + offset_r) + diff - speed
+    ser.write(bytes([myservo["motor_L"]]))
+    ser.write(bytes([left]))
+    ser.write(bytes([myservo["motor_R"]]))
+    ser.write(bytes([right]))
+    print("set L=" , left , "  R=" , right)
+    
+def stopWheels():
+    print("STOP MOTORS") 
+    left = (90 + offset_l)
+    right = (90 + offset_r)
+    ser.write(bytes([myservo["motor_L"]]))
+    ser.write(bytes([left]))
+    ser.write(bytes([myservo["motor_R"]]))
+    ser.write(bytes([right]))
+    print("set L=" , left , "  R=" , right)
+
+# def setServo(servo_name
+    
+def goToBall(ball_x = 0, ball_y = 0, ball_size): #ball_x <-100;100> ball_size <0,200> where 200 = whole screen
+    ball_y = (ball_y /2)+90
+    
+    
+    
         
         
 #while 1:
