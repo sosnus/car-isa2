@@ -3,14 +3,25 @@ from imutils.video import VideoStream
 import serial
 import numpy as np
 import cv2
+import myserial
 
 def changeData(biggestObjectMiddle):
     placeX = biggestObjectMiddle[0]
     placeY = biggestObjectMiddle[1]
-    x = (placeX - 320)/320*100
-    y = (placeY - 240)/240*100
-    ser = serial.Serial('/dev/ttyUSB0',9600)
-    ser.write(str.encode(str(x) + " " + str(y)))
+    x = ((placeX - 320)/320)
+    y = ((placeY - 240)/240)*(-1)
+    #print(int(x))
+#    x = (x/2)+50
+  #  print(int(x))
+    
+ #   y = (y/2)+50
+    print("x=",round(x,2), end = " ")
+    print("y=",round(y,2))
+#    time.sleep(0.5)
+    myserial.send(sName = myserial.myservo['cam_H'],sVal = int(x))
+    myserial.send(sName = myserial.myservo['cam_V'],sVal = int(y))    
+ #//   ser = serial.Serial('/dev/ttyUSB0',9600)
+ #//   ser.write(str.encode(str(x) + " " + str(y)))
     # print(x)
     # print(y)
 
@@ -116,7 +127,7 @@ while True:
         paused = not paused
 
     loopEnd = time.time()
-    print("loop execution took {:3.2f}ms".format((loopEnd - loopStart) * 1000))
+###    print("loop execution took {:3.2f}ms".format((loopEnd - loopStart) * 1000))
 
 cv2.destroyAllWindows()
 vs.stop()
