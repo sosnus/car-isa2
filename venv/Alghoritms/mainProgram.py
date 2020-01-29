@@ -3,35 +3,34 @@ from imutils.video import VideoStream
 import serial
 import numpy as np
 import cv2
+import alg
 import myserial
 
-servoX = 90
-servoY = 90
-print("wait")
-#timer.sleep(10)
+
+myserial.send(sName = myserial.myservo['cam_H'],sVal = 90)
+myserial.send(sName = myserial.myservo['cam_V'],sVal = 90)
+myserial.send(sName = myserial.myservo['motor_R'],sVal = 90)
+myserial.send(sName = myserial.myservo['motor_L'],sVal = 90)
+
+time.sleep(1)
+
 def changeData(biggestObjectMiddle):
     placeX = biggestObjectMiddle[0]
     placeY = biggestObjectMiddle[1]
     x = ((placeX - 320)/320)
     y = ((placeY - 240)/240)*(-1)
+    
+    alg.a_ball_x = biggestObjectMiddle[0]
+    alg.a_ball_y = biggestObjectMiddle[1]
+ #   alg.a_ball_w = 
+    alg.alg()
+    myserial.setMotors(left = alg.motor_temp_l, right= alg.motor_temp_r)
+    
     #print(int(x))
 #    x = (x/2)+50
-  #  print(int(x))
-    
- #   y = (y/2)+50
-    print("x=",round(x,2), end = " ")
-    print("y=",round(y,2))
-#    time.sleep(0.5)
-#    if x < 0:
-#        servoX = servoX - 1
-#    else:
-#        servoX = servoX + 1
-  ##  myserial.send(sName = myserial.myservo['cam_H'],sVal = int(x))
-  ##  myserial.send(sName = myserial.myservo['cam_V'],sVal = int(y))    
- #//   ser = serial.Serial('/dev/ttyUSB0',9600)
- #//   ser.write(str.encode(str(x) + " " + str(y)))
-    # print(x)
-    # print(y)
+
+#    time.sleep(0.2)
+
 
 def translate(value, oldMin, oldMax, newMin=-100, newMax=100):
     oldRange = oldMax - oldMin
@@ -45,8 +44,9 @@ cameraResolution = (640, 480)
 vs = VideoStream(usePiCamera=usesPiCamera, resolution=cameraResolution, framerate=60).start()
 time.sleep(2.0)
 
-colorLower = (0, 100, 50)
-colorUpper = (100, 255, 255)
+colorLower = (0, 100, 0)
+colorUpper = (110, 255, 255)
+
 colorTolerance = 3
 paused = False
 roiSize = (16, 16)  # roi size on the scaled down image (converted to HSV)
@@ -55,7 +55,7 @@ while True:
     loopStart = time.time()
     if not paused:
         frame = vs.read()
-        frame = cv2.flip(frame, 1)
+        frame = cv2.flip(frame, 0)
         #np.fliplr(frame)
 
         height, width = frame.shape[0:2]
@@ -72,7 +72,7 @@ while True:
 
         colorLowerWithTolerance = (colorLower[0] - colorTolerance,) + colorLower[1:]
         colorUpperWithTolerance = (colorUpper[0] + colorTolerance,) + colorUpper[1:]
-
+       # print("colorLowerWithTolerance= ", colorLowerWithTolerance,"colorUpperWithTolerance= ", colorUpperWithTolerance)
         mask = cv2.inRange(resizedHSV, colorLowerWithTolerance, colorUpperWithTolerance)
         cv2.erode(mask, None, iterations=5)
         cv2.dilate(mask, None, iterations=5)
@@ -98,6 +98,8 @@ while True:
         
         for boundingBox in boundingBoxes:
             x, y, w, h = boundingBox
+ ##           myserial.ballWidth = w
+            alg.a_ball_w = w
             cv2.rectangle(resizedColor, (x, y), (x + w, y + h), (255, 255, 0), thickness=1)
             cv2.rectangle(upscaledColor, (x * scaleFactor, y * scaleFactor),
                           ((x + w) * scaleFactor, (y + h) * scaleFactor), (255, 255, 0), thickness=2)

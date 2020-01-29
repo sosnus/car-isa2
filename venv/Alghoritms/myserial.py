@@ -4,7 +4,7 @@ import serial
 #Class myserial:
 ser = serial.Serial(
     port='/dev/ttyACM0',
-    baudrate = 9600,
+    baudrate = 19200,
     parity=serial.PARITY_NONE,
     stopbits=serial.STOPBITS_ONE,
     bytesize=serial.EIGHTBITS,
@@ -15,15 +15,18 @@ offset_l = -1
 offset_r = -1
 
 myservo =  {
-    "cam_H": 209,
-    "cam_V": 210,
-    "motor_L": 211,
-    "motor_R": 212
-    
+    "cam_H": 205,
+    "cam_V": 206,
+    "motor_L": 209,
+    "motor_R": 210
 }
 
+ballWidth = 10
+servoX = 90
+servoY = 90
+
 # def myserial():
-print("[INIT] myserial.py")
+print("[INIT] myserial")
     
 def send(sName = '0xd1', sVal = '0x64'):
     if 0:
@@ -32,15 +35,19 @@ def send(sName = '0xd1', sVal = '0x64'):
         print(sVal)
     ser.write(bytes([sName]))
     ser.write(bytes([sVal]))
+#    receive()
  #   ser.write(str.encode('\r\n'))
     
 def receive():
     x=ser.readline()
     print(x)
+   # while x != b'':
+   #     x=ser.read()
     while x != b'':
         x=ser.readline()
-        print(x)
-    print("exit receive loop")
+        print(x, end="; ")
+    print("END")
+    #print("exit receive loop")
     
 def setWheels(diff = 0, speed = 0):
     left = (90 + offset_l) + diff + speed
@@ -50,6 +57,17 @@ def setWheels(diff = 0, speed = 0):
     ser.write(bytes([myservo["motor_R"]]))
     ser.write(bytes([right]))
     print("set L=" , left , "  R=" , right)
+
+def setMotors(left = 89, right = 89):
+    left_t = 89 + int(left)
+    right_t = 89 + int(right)
+    ser.write(bytes([myservo["motor_L"]]))
+    ser.write(bytes([left_t]))
+    ser.write(bytes([myservo["motor_R"]]))
+    ser.write(bytes([right_t]))
+    print("set L=" , left_t , "  R=" , right_t, end = ">>")
+#    receive()
+
     
 def stopWheels():
     print("STOP MOTORS") 
