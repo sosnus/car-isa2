@@ -4,12 +4,12 @@ import serial
 import numpy as np
 import cv2
 import alg
-#import myserial
+import myserial
 
-# myserial.send(sName=myserial.myservo['cam_H'], sVal=90)
-# myserial.send(sName=myserial.myservo['cam_V'], sVal=90)
-# myserial.send(sName=myserial.myservo['motor_R'], sVal=90)
-# myserial.send(sName=myserial.myservo['motor_L'], sVal=90)
+myserial.send(sName=myserial.myservo['cam_H'], sVal=90)
+myserial.send(sName=myserial.myservo['cam_V'], sVal=90)
+myserial.send(sName=myserial.myservo['motor_R'], sVal=90)
+myserial.send(sName=myserial.myservo['motor_L'], sVal=90)
 
 time.sleep(1)
 
@@ -22,10 +22,11 @@ def changeData(biggestObjectMiddle):
 
     alg.a_ball_x = biggestObjectMiddle[0]
     alg.a_ball_y = biggestObjectMiddle[1]
-    #   alg.a_ball_w =
+    #alg.a_ball_w =
     alg.alg()
     myserial.setMotors(left=alg.motor_temp_l, right=alg.motor_temp_r)
-
+#   myserial.send(sName = myserial.myservo['cam_V'], sVal = alg.temp_servo_val)
+#    myserial.receive()
     # print(int(x))
 
 
@@ -47,7 +48,7 @@ cameraResolution = (640, 480)
 vs = VideoStream(usePiCamera=usesPiCamera, resolution=cameraResolution, framerate=60).start()
 time.sleep(2.0)
 
-colorLower = (0, 100, 0)
+colorLower = (138, 162, 139) # 138 162 139
 colorUpper = (200, 255, 255)
 
 redLowerTolerance = 0
@@ -87,7 +88,7 @@ while True:
         # Ustawia klorystyczne ramy poszukiwanego obiektu
         colorLowerWithTolerance = ((colorLower[0] + redLowerTolerance), (colorLower[1] + greenLowerTolerance), (colorLower[2] + blueLowerTolerance))
         colorUpperWithTolerance = ((colorUpper[0] + redUpperTolerance), (colorUpper[1] + greenUpperTolerance),(colorUpper[2] + blueUpperTolerance))
-        print("colorLowerWithTolerance= RGB", colorLowerWithTolerance,"colorUpperWithTolerance= RGB", colorUpperWithTolerance)
+        ###print("colorLowerWithTolerance= RGB", colorLowerWithTolerance,"colorUpperWithTolerance= RGB", colorUpperWithTolerance)
         mask = cv2.inRange(resizedHSV, colorLowerWithTolerance, colorUpperWithTolerance)
         cv2.erode(mask, None, iterations=5)
         cv2.dilate(mask, None, iterations=5)
@@ -153,8 +154,8 @@ while True:
 
             # print(biggestObjectMiddle)
             if type(biggestObjectMiddle) != 'NoneType':
-      #        changeData(biggestObjectMiddle)
-                print("Found object")
+              changeData(biggestObjectMiddle)
+              print("Found object")
             else:
                 print("No object")
         np.fliplr(upscaledColor)
@@ -207,7 +208,7 @@ while True:
         paused = not paused
 
     loopEnd = time.time()
-###    print("loop execution took {:3.2f}ms".format((loopEnd - loopStart) * 1000))
+    ###print("loop execution took {:3.2f}ms".format((loopEnd - loopStart) * 1000))
 
 cv2.destroyAllWindows()
 vs.stop()

@@ -33,6 +33,8 @@ pid_p = 1
 pid_i = 1
 pid_d = 1
 
+temp_servo_val = 90
+
 def alg2():
     global a_ball_x
     global screen_max_x
@@ -106,11 +108,23 @@ def alg():
     motor_temp_r = int(base_speed + (gain_speed * val_speed) + (gain_diff * val_diff))
     motor_temp_l = int(base_speed + (gain_speed * val_speed) - (gain_diff * val_diff))
     
+    global temp_servo_val
+    
+    
+    if 0:
+        if a_ball_y < -0.3 :
+            if temp_servo_val > 10:
+                temp_servo_val = temp_servo_val - 1
+        
+        if a_ball_y > 0.3 :
+            if temp_servo_val < 170:
+                temp_servo_val = temp_servo_val + 1
+        
     
 #    motor_temp_r = 90 
          
      
-    print("X=",  round(a_ball_x,3), "Y=",  round(a_ball_y,3) , "W=",  a_ball_w, " speed=", val_speed, " diff=", val_diff, " L=", motor_temp_l, " R=", motor_temp_r)
+    print("X=",  round(a_ball_x,3), "Y=",  round(a_ball_y,3) , "W=",  a_ball_w, " speed=", val_speed, " diff=", val_diff, " L=", motor_temp_l, " R=", motor_temp_r, " Y=", temp_servo_val)
     
     
     

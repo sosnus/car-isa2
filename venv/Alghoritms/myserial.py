@@ -3,7 +3,7 @@ import time
 import serial
 #Class myserial:
 ser = serial.Serial(
-    port='/dev/ttyACM0',
+    port='/dev/ttyACM1',
     baudrate = 19200,
     parity=serial.PARITY_NONE,
     stopbits=serial.STOPBITS_ONE,
@@ -29,13 +29,13 @@ servoY = 90
 print("[INIT] myserial")
     
 def send(sName = '0xd1', sVal = '0x64'):
-    if 0:
+    if 1:
         print('send: ', end= ' ')
         print(sName, end = '=' )
         print(sVal)
     ser.write(bytes([sName]))
     ser.write(bytes([sVal]))
-#    receive()
+###    receive()
  #   ser.write(str.encode('\r\n'))
     
 def receive():
@@ -60,13 +60,13 @@ def setWheels(diff = 0, speed = 0):
 
 def setMotors(left = 89, right = 89):
     left_t = 89 + int(left)
-    right_t = 89 + int(right)
+    right_t = 89 - int(right)
     ser.write(bytes([myservo["motor_L"]]))
     ser.write(bytes([left_t]))
     ser.write(bytes([myservo["motor_R"]]))
     ser.write(bytes([right_t]))
     print("set L=" , left_t , "  R=" , right_t, end = ">>")
-#    receive()
+  #  receive()
 
     
 def stopWheels():
