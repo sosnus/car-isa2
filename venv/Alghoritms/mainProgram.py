@@ -4,12 +4,13 @@ import serial
 import numpy as np
 import cv2
 import alg
-import myserial
+import math
+#import myserial
 
-myserial.send(sName=myserial.myservo['cam_H'], sVal=90)
-myserial.send(sName=myserial.myservo['cam_V'], sVal=90)
-myserial.send(sName=myserial.myservo['motor_R'], sVal=90)
-myserial.send(sName=myserial.myservo['motor_L'], sVal=90)
+# myserial.send(sName=myserial.myservo['cam_H'], sVal=90)
+# myserial.send(sName=myserial.myservo['cam_V'], sVal=90)
+# myserial.send(sName=myserial.myservo['motor_R'], sVal=90)
+# myserial.send(sName=myserial.myservo['motor_L'], sVal=90)
 
 time.sleep(1)
 
@@ -48,8 +49,8 @@ cameraResolution = (640, 480)
 vs = VideoStream(usePiCamera=usesPiCamera, resolution=cameraResolution, framerate=60).start()
 time.sleep(2.0)
 
-colorLower = (138, 162, 139) # 138 162 139
-colorUpper = (200, 255, 255)
+colorLower = (158, 135, 0) # 158 , 135, 0
+colorUpper = (176, 255, 247) # 176 255 247
 
 redLowerTolerance = 0
 greenLowerTolerance = 0
@@ -57,15 +58,19 @@ blueLowerTolerance = 0
 redUpperTolerance = 0
 greenUpperTolerance = 0
 blueUpperTolerance = 0
+
+approxTolerance = 10
+areaTolerance = 30
+acuteTolerance = 0.01
 paused = False
 roiSize = (16, 16)  # roi size on the scaled down image (converted to HSV)
 
 # Wielkość obrazu stanowi prostokąt o wymiarach 640 x 480 px
 # 1/4 obrazu to prostokąt o wymiarach 160 x 120
-NumbersIterationForAchieveStatistics = 20
+NumbersIterationForAchieveStatistics = 10
 historicBallObject = []
 compareScaleFactor = 0.1
-
+ballIsVisible = False
 while True:
     loopStart = time.time()
     if not paused:
@@ -88,49 +93,68 @@ while True:
         # Ustawia klorystyczne ramy poszukiwanego obiektu
         colorLowerWithTolerance = ((colorLower[0] + redLowerTolerance), (colorLower[1] + greenLowerTolerance), (colorLower[2] + blueLowerTolerance))
         colorUpperWithTolerance = ((colorUpper[0] + redUpperTolerance), (colorUpper[1] + greenUpperTolerance),(colorUpper[2] + blueUpperTolerance))
-        ###print("colorLowerWithTolerance= RGB", colorLowerWithTolerance,"colorUpperWithTolerance= RGB", colorUpperWithTolerance)
+        print("colorLowerWithTolerance= RGB", colorLowerWithTolerance,"colorUpperWithTolerance= RGB", colorUpperWithTolerance, " approxTolerance= ", approxTolerance, " areaTolerance= ", areaTolerance, " acuteTolerance= ", acuteTolerance)
         mask = cv2.inRange(resizedHSV, colorLowerWithTolerance, colorUpperWithTolerance)
         cv2.erode(mask, None, iterations=5)
         cv2.dilate(mask, None, iterations=5)
 
+        edge_detected_image = cv2.Canny(mask, 75, 200)
+        cv2.imshow('Edge', edge_detected_image)
         # Pobiera kontury wszystkich znalezionych obiektów
-        (contours, hierarchy) = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        (contours, hierarchy) = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         boundingBoxes = []
         biggestObject_BoundingBox = None
         biggestObjectMiddle = None
         probablyObjectIsBall = None
+        circular_countours = []
         # Rozpoczynamy filtrowanie wszystkich znalezionych obiektów w celu wyodrębnienia piłki
         if contours:
-            # Wybieramy największy znaleziony obiekt
-            largestContour = max(contours, key=cv2.contourArea)
-            if len(historicBallObject) == NumbersIterationForAchieveStatistics:
-                historicBallObject.clear()
-            if len(historicBallObject) == 0:
-                biggestObject_BoundingBox = cv2.boundingRect(largestContour)
-                historicBallObject.append(biggestObject_BoundingBox)
-            else:
-                lastIndexTableHistoricBallObject = len(historicBallObject) -1
-                # Filtrujemy obiekty szukając obiektu którego średnica w 10% przypomina średnicę poprzednio znalezionej piłki (% zależne od compareScaleFactor)
-                lastObserverBall = historicBallObject[lastIndexTableHistoricBallObject]
-                probablyNextBall = cv2.boundingRect(largestContour)
-                diameterLastObserverBall = (lastObserverBall[2] * lastObserverBall[3])
-                diameterProbablyBall = probablyNextBall[2] * probablyNextBall[3]
-                print(diameterProbablyBall)
-                condition1 = diameterLastObserverBall * (1 + compareScaleFactor)
-                condition2 = diameterLastObserverBall * (1 - compareScaleFactor)
-                if diameterProbablyBall < condition1 or diameterLastObserverBall > condition2:
+            # Wybieramy tylko obiekty kuliste o odpowiednio wielkiej powierzchni jeśli wcześniej widzieliśmy piłkę
+            for contour in contours:
+                approx = cv2.approxPolyDP(contour, acuteTolerance * cv2.arcLength(contour, True), True)
+                area = cv2.contourArea(contour)
+                if(ballIsVisible):
+                    if ((len(approx) > approxTolerance) & (area > areaTolerance)):
+                        circular_countours.append(contour)
+                else:
+                    if (len(approx) > approxTolerance):
+                        circular_countours.append(contour)
+            # Wybieramy największy znaleziony obiekt z kulistych obiektów jeśli w histori nie posiadamy ostatniego rozmiaru piłki
+            if circular_countours:
+                largestContour = max(circular_countours, key=cv2.contourArea)
+                if len(historicBallObject) == NumbersIterationForAchieveStatistics:
+                    historicBallObject.clear()
+                if len(historicBallObject) == 0:
                     biggestObject_BoundingBox = cv2.boundingRect(largestContour)
                     historicBallObject.append(biggestObject_BoundingBox)
-            # Wybieramy ze zbioru znalezionych obiektów tylko te których powierzchnia obiektu jest większa niż 75 px
-            for i, contour in enumerate(contours):
-                area = cv2.contourArea(contour)
-                # Jeżeli powierzchnia obiektu jest większa niż 75 px
-                if area > ((newWidth * newHeight) / 256):
-                    x, y, w, h = cv2.boundingRect(contour)
-                    boundingBoxes.append((x, y, w, h))
-        else:
-            pass
+                else:
+                    lastIndexTableHistoricBallObject = len(historicBallObject) -1
+                    # Filtrujemy obiekty szukając obiektu którego średnica w 10% przypomina średnicę poprzednio znalezionej piłki (% zależne od compareScaleFactor)
+                    lastObserverBall = historicBallObject[lastIndexTableHistoricBallObject]
+                    probablyNextBall = cv2.boundingRect(largestContour)
+                    diameterLastObserverBall = (lastObserverBall[2] * lastObserverBall[3])/2
+                    diameterProbablyBall = probablyNextBall[2] * probablyNextBall[3]/2
+                    print(diameterProbablyBall)
+                    condition1 = diameterLastObserverBall * (1 + compareScaleFactor)
+                    condition2 = diameterLastObserverBall * (1 - compareScaleFactor)
+                    if diameterProbablyBall < condition1 or diameterLastObserverBall > condition2:
+                        if(ballIsVisible):
+                            if(math.pow(probablyNextBall[0] - lastObserverBall[0],2) + (math.pow(probablyNextBall[1]- lastObserverBall[1],2)) <=2 * diameterLastObserverBall ):
+                                biggestObject_BoundingBox = cv2.boundingRect(largestContour)
+                                historicBallObject.append(biggestObject_BoundingBox)
+                        else:
+                            biggestObject_BoundingBox = cv2.boundingRect(largestContour)
+                            historicBallObject.append(biggestObject_BoundingBox)
+                # Wybieramy ze zbioru znalezionych obiektów tylko te których powierzchnia obiektu jest większa niż 75 px
+                for i, contour in enumerate(circular_countours):
+                    area = cv2.contourArea(contour)
+                    # Jeżeli powierzchnia obiektu jest większa niż 75 px
+                    if area > ((newWidth * newHeight) / 256):
+                        x, y, w, h = cv2.boundingRect(contour)
+                        boundingBoxes.append((x, y, w, h))
+            else:
+                pass
 
         upscaledColor = cv2.resize(resizedColor, (width, height), interpolation=cv2.INTER_NEAREST)
         # Wyświetlanie pobocznie obserwowanych obiektów
@@ -154,9 +178,11 @@ while True:
 
             # print(biggestObjectMiddle)
             if type(biggestObjectMiddle) != 'NoneType':
-              changeData(biggestObjectMiddle)
+              # changeData(biggestObjectMiddle)
+              ballIsVisible = True
               print("Found object")
             else:
+                ballIsVisible = False
                 print("No object")
         np.fliplr(upscaledColor)
         cv2.imshow("video", upscaledColor)
@@ -204,6 +230,24 @@ while True:
     elif key == ord('k'):
         if (colorUpper[2] + blueUpperTolerance) > 0:
                 blueUpperTolerance = blueUpperTolerance - 1
+    elif key == ord('z'):
+        if (approxTolerance + 1) > 0:
+                approxTolerance = approxTolerance + 1
+    elif key == ord('x'):
+        if (approxTolerance - 1) >= 0:
+                approxTolerance = approxTolerance - 1
+    elif key == ord('c'):
+        if (areaTolerance + 1) > 0:
+                areaTolerance = areaTolerance + 1
+    elif key == ord('v'):
+        if (areaTolerance - 1) >= 0:
+                areaTolerance = areaTolerance - 1
+    elif key == ord('b'):
+        if (acuteTolerance + 0.0001) >= 0:
+                acuteTolerance = acuteTolerance +0.0001
+    elif key == ord('n'):
+        if (acuteTolerance - 0.0001) >= 0:
+            acuteTolerance = acuteTolerance - 0.0001
     elif key == ord('p'):
         paused = not paused
 
