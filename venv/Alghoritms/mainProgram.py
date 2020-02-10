@@ -42,6 +42,17 @@ def translate(value, oldMin, oldMax, newMin=-100, newMax=100):
     NewValue = (((value - oldMin) * newRange) / oldRange) + newMin
     return int(NewValue)
 
+def moveAway(oldArea=0, newArea=0):
+    
+    if (newArea*1.2) < oldArea:
+        print("Oddala sie")
+        return 1
+    elif (newArea*0.8) > oldArea:
+        print("Przybliza sie")
+        return -1
+    else:
+        print("W miejscu")
+        return 0
 
 usesPiCamera = False
 
@@ -103,6 +114,7 @@ while True:
         # Pobiera kontury wszystkich znalezionych obiektów
         (contours, hierarchy) = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
+        area = 0
         boundingBoxes = []
         biggestObject_BoundingBox = None
         biggestObjectMiddle = None
@@ -113,10 +125,12 @@ while True:
             # Wybieramy tylko obiekty kuliste o odpowiednio wielkiej powierzchni jeśli wcześniej widzieliśmy piłkę
             for contour in contours:
                 approx = cv2.approxPolyDP(contour, acuteTolerance * cv2.arcLength(contour, True), True)
-                area = cv2.contourArea(contour)
+                oldArea=area
+                area = cv2.contourArea(contour) 
                 if(ballIsVisible):
                     if ((len(approx) > approxTolerance) & (area > areaTolerance)):
                         circular_countours.append(contour)
+                        moveAway(oldArea, area)
                 else:
                     if (len(approx) > approxTolerance):
                         circular_countours.append(contour)
