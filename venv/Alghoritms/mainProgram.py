@@ -5,12 +5,12 @@ import numpy as np
 import cv2
 import alg
 import math
-#import myserial
+import myserial
 
-# myserial.send(sName=myserial.myservo['cam_H'], sVal=90)
-# myserial.send(sName=myserial.myservo['cam_V'], sVal=90)
-# myserial.send(sName=myserial.myservo['motor_R'], sVal=90)
-# myserial.send(sName=myserial.myservo['motor_L'], sVal=90)
+myserial.send(sName=myserial.myservo['cam_H'], sVal=90)
+myserial.send(sName=myserial.myservo['cam_V'], sVal=90)
+myserial.send(sName=myserial.myservo['motor_R'], sVal=90)
+myserial.send(sName=myserial.myservo['motor_L'], sVal=90)
 
 time.sleep(1)
 
@@ -26,14 +26,14 @@ def changeData(biggestObjectMiddle):
     #alg.a_ball_w =
     alg.alg()
     myserial.setMotors(left=alg.motor_temp_l, right=alg.motor_temp_r)
-#   myserial.send(sName = myserial.myservo['cam_V'], sVal = alg.temp_servo_val)
-#    myserial.receive()
+    myserial.send(sName = myserial.myservo['cam_V'], sVal = alg.temp_servo_val)
+    myserial.receive()
     # print(int(x))
 
 
-#    x = (x/2)+50
+    x = (x/2)+50
 
-#    time.sleep(0.2)
+    time.sleep(0.2)
 
 
 def translate(value, oldMin, oldMax, newMin=-100, newMax=100):
@@ -45,13 +45,13 @@ def translate(value, oldMin, oldMax, newMin=-100, newMax=100):
 def moveAway(oldArea=0, newArea=0):
     
     if (newArea*1.2) < oldArea:
-        print("Oddala sie")
+        #print("Oddala sie")
         return 1
     elif (newArea*0.8) > oldArea:
-        print("Przybliza sie")
+        #print("Przybliza sie")
         return -1
     else:
-        print("W miejscu")
+        #print("W miejscu")
         return 0
 
 usesPiCamera = False
@@ -60,8 +60,8 @@ cameraResolution = (640, 480)
 vs = VideoStream(usePiCamera=usesPiCamera, resolution=cameraResolution, framerate=60).start()
 time.sleep(2.0)
 
-colorLower = (158, 135, 0) # 158 , 135, 0
-colorUpper = (176, 255, 247) # 176 255 247
+colorLower = (158, 111, 0) # 158 , 135, 0
+colorUpper = (255, 255, 255) # 176 255 247
 
 redLowerTolerance = 0
 greenLowerTolerance = 0
@@ -71,7 +71,7 @@ greenUpperTolerance = 0
 blueUpperTolerance = 0
 
 approxTolerance = 10
-areaTolerance = 30
+areaTolerance = 20
 acuteTolerance = 0.01
 paused = False
 roiSize = (16, 16)  # roi size on the scaled down image (converted to HSV)
@@ -104,13 +104,13 @@ while True:
         # Ustawia klorystyczne ramy poszukiwanego obiektu
         colorLowerWithTolerance = ((colorLower[0] + redLowerTolerance), (colorLower[1] + greenLowerTolerance), (colorLower[2] + blueLowerTolerance))
         colorUpperWithTolerance = ((colorUpper[0] + redUpperTolerance), (colorUpper[1] + greenUpperTolerance),(colorUpper[2] + blueUpperTolerance))
-        print("colorLowerWithTolerance= RGB", colorLowerWithTolerance,"colorUpperWithTolerance= RGB", colorUpperWithTolerance, " approxTolerance= ", approxTolerance, " areaTolerance= ", areaTolerance, " acuteTolerance= ", acuteTolerance)
+#        print("colorLowerWithTolerance= RGB", colorLowerWithTolerance,"colorUpperWithTolerance= RGB", colorUpperWithTolerance, " approxTolerance= ", approxTolerance, " areaTolerance= ", areaTolerance, " acuteTolerance= ", acuteTolerance)
         mask = cv2.inRange(resizedHSV, colorLowerWithTolerance, colorUpperWithTolerance)
         cv2.erode(mask, None, iterations=5)
         cv2.dilate(mask, None, iterations=5)
 
         edge_detected_image = cv2.Canny(mask, 75, 200)
-        cv2.imshow('Edge', edge_detected_image)
+ #       cv2.imshow('Edge', edge_detected_image)
         # Pobiera kontury wszystkich znalezionych obiektów
         (contours, hierarchy) = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -130,7 +130,7 @@ while True:
                 if(ballIsVisible):
                     if ((len(approx) > approxTolerance) & (area > areaTolerance)):
                         circular_countours.append(contour)
-                        moveAway(oldArea, area)
+                        #moveAway(oldArea, area)
                 else:
                     if (len(approx) > approxTolerance):
                         circular_countours.append(contour)
@@ -174,7 +174,7 @@ while True:
         # Wyświetlanie pobocznie obserwowanych obiektów
         for boundingBox in boundingBoxes:
             x, y, w, h = boundingBox
-            ##           myserial.ballWidth = w
+            myserial.ballWidth = w
             alg.a_ball_w = w
             cv2.rectangle(resizedColor, (x, y), (x + w, y + h), (255, 255, 0), thickness=1)
             cv2.rectangle(upscaledColor, (x * scaleFactor, y * scaleFactor),
@@ -192,7 +192,7 @@ while True:
 
             # print(biggestObjectMiddle)
             if type(biggestObjectMiddle) != 'NoneType':
-              # changeData(biggestObjectMiddle)
+              changeData(biggestObjectMiddle)
               ballIsVisible = True
               print("Found object")
             else:

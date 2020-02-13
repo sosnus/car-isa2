@@ -3,7 +3,7 @@ import time
 import serial
 #Class myserial:
 ser = serial.Serial(
-    port='/dev/ttyACM1',
+    port='/dev/ttyACM0',
     baudrate = 19200,
     parity=serial.PARITY_NONE,
     stopbits=serial.STOPBITS_ONE,
